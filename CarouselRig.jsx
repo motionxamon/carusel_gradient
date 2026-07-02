@@ -1,10 +1,14 @@
 /*
 CarouselRig.jsx
-Minimal After Effects ScriptUI panel for arranging selected layers into a 2D/3D carousel.
+After Effects ScriptUI panel for arranging selected layers into a 2D/3D carousel
+with optional gradient-driven scale.
 */
 
 (function carouselRig(thisObj) {
     var SCRIPT_NAME = "Carousel Rig";
+    var CTRL_NAME = "Carousel Control";
+    var CAMERA_NAME = "Carousel Camera";
+    var GRADIENT_NAME = "Carousel Gradient Scale";
 
     function buildUI(thisObj) {
         var pal = (thisObj instanceof Panel)
@@ -16,34 +20,29 @@ Minimal After Effects ScriptUI panel for arranging selected layers into a 2D/3D 
         pal.spacing = 8;
         pal.margins = 10;
 
-        var radiusGroup = pal.add("group");
-        radiusGroup.orientation = "row";
-        radiusGroup.alignChildren = ["left", "center"];
-        radiusGroup.add("statictext", undefined, "Radius");
-        var radiusInput = radiusGroup.add("edittext", undefined, "auto");
-        radiusInput.characters = 8;
+        var layoutPanel = pal.add("panel", undefined, "Carousel");
+        layoutPanel.orientation = "column";
+        layoutPanel.alignChildren = ["left", "top"];
+        layoutPanel.margins = 10;
 
-        var offsetGroup = pal.add("group");
-        offsetGroup.orientation = "row";
-        offsetGroup.alignChildren = ["left", "center"];
-        offsetGroup.add("statictext", undefined, "Rotation");
-        var rotationInput = offsetGroup.add("edittext", undefined, "0");
-        rotationInput.characters = 8;
-
-        var spacingGroup = pal.add("group");
-        spacingGroup.orientation = "row";
-        spacingGroup.alignChildren = ["left", "center"];
-        spacingGroup.add("statictext", undefined, "Offset");
-        var offsetInput = spacingGroup.add("edittext", undefined, "0");
-        offsetInput.characters = 8;
-
-        var options = pal.add("group");
-        options.orientation = "row";
-        var make3DCheck = options.add("checkbox", undefined, "3D");
+        var make3DCheck = layoutPanel.add("checkbox", undefined, "3D Layers");
         make3DCheck.value = true;
-        var faceCameraCheck = options.add("checkbox", undefined, "Face Camera");
+        try {
+            make3DCheck.helpTip = "Turns every selected carousel layer into a 3D layer and places it around the 3D carousel center.";
+        } catch (err) {}
+
+        var faceCameraCheck = layoutPanel.add("checkbox", undefined, "Face Camera");
         faceCameraCheck.value = true;
-        var gradientScaleCheck = options.add("checkbox", undefined, "Gradient Scale");
+        try {
+            faceCameraCheck.helpTip = "Applies Auto-Orient toward the carousel camera.";
+        } catch (err) {}
+
+        var gradientPanel = pal.add("panel", undefined, "Gradient Control");
+        gradientPanel.orientation = "column";
+        gradientPanel.alignChildren = ["left", "top"];
+        gradientPanel.margins = 10;
+
+        var gradientScaleCheck = gradientPanel.add("checkbox", undefined, "Gradient Scale");
         gradientScaleCheck.value = false;
 
         var createBtn = pal.add("button", undefined, "Create Carousel");
@@ -53,9 +52,9 @@ Minimal After Effects ScriptUI panel for arranging selected layers into a 2D/3D 
                 var comp = activeComp();
                 createCarousel({
                     comp: comp,
-                    radius: autoNumber(radiusInput.text, defaultRadius(comp)),
-                    rotation: numberValue(rotationInput.text, 0),
-                    offset: numberValue(offsetInput.text, 0),
+                    radius: defaultRadius(comp),
+                    rotation: 0,
+                    offset: 0,
                     make3D: make3DCheck.value,
                     faceCamera: faceCameraCheck.value,
                     gradientScale: gradientScaleCheck.value
@@ -71,18 +70,6 @@ Minimal After Effects ScriptUI panel for arranging selected layers into a 2D/3D 
         pal.layout.resize();
         pal.onResizing = pal.onResize = function () { this.layout.resize(); };
         return pal;
-    }
-
-    function numberValue(text, fallback) {
-        var value = parseFloat(text);
-        return isNaN(value) ? fallback : value;
-    }
-
-    function autoNumber(text, fallback) {
-        if (!text || String(text).toLowerCase() === "auto") {
-            return fallback;
-        }
-        return numberValue(text, fallback);
     }
 
     function defaultRadius(comp) {
@@ -152,34 +139,35 @@ Minimal After Effects ScriptUI panel for arranging selected layers into a 2D/3D 
         }
     }
 
-    function addSlider(layer, name, value) {
+    function addEffect(layer, matchName, name) {
         var fx = layer.property("ADBE Effect Parade");
         if (!fx) {
             throw new Error("Layer cannot receive controls: " + layer.name);
         }
-        var prop = fx.addProperty("ADBE Slider Control");
-        prop.name = name;
-        prop.property(1).setValue(value);
-        return prop;
-    }
 
-    function setOrAddSlider(layer, name, value) {
-        var fx = layer.property("ADBE Effect Parade");
-        if (!fx) {
-            throw new Error("Layer cannot receive controls: " + layer.name);
-        }
         var prop = fx.property(name);
         if (!prop) {
-            prop = fx.addProperty("ADBE Slider Control");
+            prop = fx.addProperty(matchName);
             prop.name = name;
         }
+        return prop;
+    }
+
+    function addSlider(layer, name, value) {
+        var prop = addEffect(layer, "ADBE Slider Control", name);
         prop.property(1).setValue(value);
         return prop;
     }
 
-    function createController(comp, opts, count) {
+    function addAngle(layer, name, value) {
+        var prop = addEffect(layer, "ADBE Angle Control", name);
+        prop.property(1).setValue(value);
+        return prop;
+    }
+
+    function createController(comp, opts) {
         var ctrl = comp.layers.addNull();
-        ctrl.name = uniqueName(comp, "Carousel CTRL");
+        ctrl.name = uniqueName(comp, CTRL_NAME);
         ctrl.threeDLayer = opts.make3D;
         ctrl.label = 9;
 
@@ -189,8 +177,9 @@ Minimal After Effects ScriptUI panel for arranging selected layers into a 2D/3D 
         ctrl.property("ADBE Transform Group").property("ADBE Position").setValue(position);
 
         addSlider(ctrl, "Radius", opts.radius);
-        addSlider(ctrl, "Rotation", opts.rotation);
-        addSlider(ctrl, "Offset", opts.offset);
+        addAngle(ctrl, "Rotation", opts.rotation);
+        addAngle(ctrl, "Offset", opts.offset);
+
         if (opts.gradientScale) {
             addSlider(ctrl, "Min Scale", 55);
             addSlider(ctrl, "Max Scale", 115);
@@ -198,15 +187,18 @@ Minimal After Effects ScriptUI panel for arranging selected layers into a 2D/3D 
         return ctrl;
     }
 
+    function usesGradient(opts) {
+        return opts.gradientScale;
+    }
+
     function createGradientLayer(comp) {
-        var name = "Carousel Gradient Scale";
-        var layer = layerByName(comp, name);
+        var layer = layerByName(comp, GRADIENT_NAME);
         if (layer && layer.matchName !== "ADBE Camera Layer" && layer.matchName !== "ADBE Light Layer") {
             ensureGradientLayerSetup(layer, comp);
             return layer;
         }
 
-        layer = comp.layers.addSolid([1, 1, 1], name, comp.width, comp.height, comp.pixelAspect, comp.duration);
+        layer = comp.layers.addSolid([1, 1, 1], GRADIENT_NAME, comp.width, comp.height, comp.pixelAspect, comp.duration);
         ensureGradientLayerSetup(layer, comp);
         layer.moveToEnd();
         return layer;
@@ -233,20 +225,25 @@ Minimal After Effects ScriptUI panel for arranging selected layers into a 2D/3D 
 
     function setRampDefaults(ramp, comp) {
         try {
-            ramp.property(1).setValue([comp.width / 2, 0]);
+            ramp.property(1).setValue([0, 0]);
             ramp.property(2).setValue([1, 1, 1]);
-            ramp.property(3).setValue([comp.width / 2, comp.height]);
+            ramp.property(3).setValue([comp.width, comp.height]);
             ramp.property(4).setValue([0, 0, 0]);
         } catch (err) {}
     }
 
-    function createCamera(comp) {
-        var camera = layerByName(comp, "Carousel Camera");
+    function createCamera(comp, afterLayer) {
+        var camera = layerByName(comp, CAMERA_NAME);
         if (camera && camera.matchName === "ADBE Camera Layer") {
+            if (afterLayer) {
+                try {
+                    camera.moveAfter(afterLayer);
+                } catch (err) {}
+            }
             return camera;
         }
 
-        camera = comp.layers.addCamera("Carousel Camera", [comp.width / 2, comp.height / 2]);
+        camera = comp.layers.addCamera(CAMERA_NAME, [comp.width / 2, comp.height / 2]);
         var distance = Math.max(comp.width, comp.height) * 1.5;
         var transform = camera.property("ADBE Transform Group");
         var position = transform ? transform.property("ADBE Position") : null;
@@ -257,24 +254,29 @@ Minimal After Effects ScriptUI panel for arranging selected layers into a 2D/3D 
         if (poi) {
             poi.setValue([comp.width / 2, comp.height / 2, 0]);
         }
+        if (afterLayer) {
+            camera.moveAfter(afterLayer);
+        }
         return camera;
     }
 
     function createCarousel(opts) {
         var comp = opts.comp;
         var layers = selectedCarouselLayers(comp);
-        var ctrl = createController(comp, opts, layers.length);
-        var gradientLayer = opts.gradientScale ? createGradientLayer(comp) : null;
+        var gradientLayer = usesGradient(opts) ? createGradientLayer(comp) : null;
+        var ctrl = createController(comp, opts);
+        var bottomCarouselLayer = lastLayerInStack(layers);
 
         if (opts.make3D) {
-            createCamera(comp);
+            createCamera(comp, bottomCarouselLayer);
         }
+        ctrl.moveBefore(firstLayerInStack(layers));
 
         for (var i = 0; i < layers.length; i++) {
             var layer = layers[i];
             layer.threeDLayer = opts.make3D;
-            setOrAddSlider(layer, "Carousel Index", i + 1);
-            setOrAddSlider(layer, "Carousel Count", layers.length);
+            addSlider(layer, "Carousel Index", i + 1);
+            addSlider(layer, "Carousel Count", layers.length);
             fitLayerToComp(layer, comp, opts.make3D);
             layer.parent = ctrl;
             if (opts.make3D && opts.faceCamera) {
@@ -282,11 +284,31 @@ Minimal After Effects ScriptUI panel for arranging selected layers into a 2D/3D 
                     layer.autoOrient = AutoOrientType.CAMERA_OR_POINT_OF_INTEREST;
                 } catch (err) {}
             }
-            applyExpressions(layer, ctrl.name, opts.make3D);
-            if (gradientLayer) {
+            applyPositionExpression(layer, ctrl.name, opts.make3D);
+            if (opts.gradientScale) {
                 applyGradientScaleExpression(layer, ctrl.name, gradientLayer.name);
             }
         }
+    }
+
+    function firstLayerInStack(layers) {
+        var first = layers[0];
+        for (var i = 1; i < layers.length; i++) {
+            if (layers[i].index < first.index) {
+                first = layers[i];
+            }
+        }
+        return first;
+    }
+
+    function lastLayerInStack(layers) {
+        var last = layers[0];
+        for (var i = 1; i < layers.length; i++) {
+            if (layers[i].index > last.index) {
+                last = layers[i];
+            }
+        }
+        return last;
     }
 
     function fitLayerToComp(layer, comp, is3D) {
@@ -309,36 +331,43 @@ Minimal After Effects ScriptUI panel for arranging selected layers into a 2D/3D 
         if (!scaleProp) {
             return;
         }
-        var scale = scaleProp.value;
         if (is3D) {
-            scaleProp.setValue([fit, fit, scale.length > 2 ? fit : 100]);
+            scaleProp.setValue([fit, fit, fit]);
         } else {
             scaleProp.setValue([fit, fit]);
         }
     }
 
-    function applyExpressions(layer, ctrlName, is3D) {
-        var safeCtrlName = ctrlName.replace(/\\/g, "\\\\").replace(/"/g, "\\\"");
+    function escapeLayerName(name) {
+        return name.replace(/\\/g, "\\\\").replace(/"/g, "\\\"");
+    }
 
-        var shared =
+    function carouselSharedExpression(ctrlName) {
+        var safeCtrlName = escapeLayerName(ctrlName);
+        return '' +
             'ctrl=thisComp.layer("' + safeCtrlName + '");\n' +
             'idx=effect("Carousel Index")("Slider")-1;\n' +
             'count=Math.max(1,Math.round(effect("Carousel Count")("Slider")));\n' +
-            'rotation=degreesToRadians(ctrl.effect("Rotation")("Slider"));\n' +
-            'offset=ctrl.effect("Offset")("Slider")/100;\n' +
-            'step=(Math.PI*2/count)*(1-offset);\n' +
+            'rotation=degreesToRadians(ctrl.effect("Rotation")("Angle"));\n' +
+            'offset=degreesToRadians(ctrl.effect("Offset")("Angle"));\n' +
+            'step=(Math.PI*2/count)+offset;\n' +
             'a=rotation+idx*step;\n';
+    }
 
+    function applyPositionExpression(layer, ctrlName, is3D) {
+        var base = carouselSharedExpression(ctrlName);
         var posExpr;
         if (is3D) {
-            posExpr = shared +
+            posExpr = base +
                 'radius=ctrl.effect("Radius")("Slider");\n' +
-                '[Math.sin(a)*radius,0,Math.cos(a)*radius];';
+                'base=[Math.sin(a)*radius,0,Math.cos(a)*radius];\n';
         } else {
-            posExpr = shared +
+            posExpr = base +
                 'radius=ctrl.effect("Radius")("Slider");\n' +
-                '[Math.sin(a)*radius,Math.cos(a)*radius*0.28];';
+                'base=[Math.sin(a)*radius,Math.cos(a)*radius*0.28];\n';
         }
+
+        posExpr += 'base;';
 
         var transform = layer.property("ADBE Transform Group");
         var position = transform ? transform.property("ADBE Position") : null;
@@ -355,8 +384,8 @@ Minimal After Effects ScriptUI panel for arranging selected layers into a 2D/3D 
             throw new Error("Layer has no editable scale: " + layer.name);
         }
 
-        var safeCtrlName = ctrlName.replace(/\\/g, "\\\\").replace(/"/g, "\\\"");
-        var safeGradientName = gradientName.replace(/\\/g, "\\\\").replace(/"/g, "\\\"");
+        var safeCtrlName = escapeLayerName(ctrlName);
+        var safeGradientName = escapeLayerName(gradientName);
         var expr =
             'ctrl=thisComp.layer("' + safeCtrlName + '");\n' +
             'grad=thisComp.layer("' + safeGradientName + '");\n' +
@@ -372,7 +401,7 @@ Minimal After Effects ScriptUI panel for arranging selected layers into a 2D/3D 
             'luma=linear(u,0,1,l1,l2);\n' +
             'minS=ctrl.effect("Min Scale")("Slider")/100;\n' +
             'maxS=ctrl.effect("Max Scale")("Slider")/100;\n' +
-            's=linear(luma,0,1,maxS,minS);\n' +
+            's=linear(luma,0,1,minS,maxS);\n' +
             'value*s;';
         scale.expression = expr;
     }

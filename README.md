@@ -1,15 +1,18 @@
 # Carousel Gradient Rig for After Effects
 
-A minimal After Effects ScriptUI panel for building a controllable 2D/3D carousel from selected layers, with optional gradient-driven scale.
+![Carousel Gradient Scale demo](assets/carousel_scale.gif)
+
+ScriptUI panel for building a controllable 2D/3D carousel from selected After Effects layers, with optional gradient-driven scale.
 
 ## Features
 
-- Builds a carousel from selected layers: shapes, text, images, footage, precomps.
-- Creates a central `Carousel CTRL` null.
-- Parents all carousel layers to the null, so you can rotate/move the whole rig as one object.
+- Builds a carousel from selected layers: shapes, text, footage, images, precomps.
+- Creates a central `Carousel Control` null above the carousel layers.
+- Parents the carousel layers to the control null, so the full rig can be moved or rotated as one object.
 - Supports 2D and 3D carousel layouts.
-- Optionally creates a camera and sets selected layers to face the camera.
-- Optional gradient scale mode: layers scale based on their position along a hidden gradient controller.
+- Creates a `Carousel Camera` after the carousel layers when 3D mode is enabled.
+- Can auto-orient carousel layers toward the camera.
+- Optional `Gradient Scale` mode scales layers from a hidden Ramp effect.
 
 ## Install
 
@@ -17,6 +20,12 @@ Copy `CarouselRig.jsx` to your After Effects ScriptUI Panels folder:
 
 ```text
 /Applications/Adobe After Effects <version>/Scripts/ScriptUI Panels/
+```
+
+On Windows this is usually:
+
+```text
+C:\Program Files\Adobe\Adobe After Effects <version>\Support Files\Scripts\ScriptUI Panels\
 ```
 
 Restart After Effects, then open:
@@ -29,62 +38,66 @@ Window > CarouselRig.jsx
 
 1. Open a composition.
 2. Select the layers you want to arrange into a carousel.
-3. Open the `CarouselRig.jsx` panel.
-4. Set `Radius`, `Rotation`, and `Offset`.
-5. Enable `3D` if you want a 3D carousel.
-6. Enable `Face Camera` if you want the layers to auto-orient toward the camera.
-7. Enable `Gradient Scale` if you want scale to react to a gradient.
-8. Click `Create Carousel`.
+3. Open `Window > CarouselRig.jsx`.
+4. Leave `3D Layers` enabled for a 3D carousel, or disable it for a 2D layout.
+5. Leave `Face Camera` enabled if 3D layers should auto-orient toward the camera.
+6. Enable `Gradient Scale` if the layer scale should react to a gradient.
+7. Click `Create Carousel`.
 
 ## Controls
 
-The script creates a `Carousel CTRL` null in the center of the composition.
+The script creates a null named `Carousel Control`.
 
-- `Radius`: controls the carousel radius.
-- `Rotation`: rotates the layer distribution around the carousel. Animate this for a spinning carousel.
-- `Offset`: compresses or expands the spacing between layers.
-  - `0` keeps normal circular spacing.
-  - Positive values pull layers closer together.
-  - Negative values push layers farther apart.
-- `Min Scale`: created only with `Gradient Scale`; smallest scale multiplier.
-- `Max Scale`: created only with `Gradient Scale`; largest scale multiplier.
+- `Radius`: carousel radius.
+- `Rotation`: angle control for rotating the layer distribution around the carousel.
+- `Offset`: angle control for changing the spacing between carousel layers.
+- `Min Scale`: created only with `Gradient Scale`; scale value for black gradient areas.
+- `Max Scale`: created only with `Gradient Scale`; scale value for white gradient areas.
 
-You can also rotate the `Carousel CTRL` null itself:
-
-- In 2D mode, use regular Z rotation.
-- In 3D mode, use X/Y/Z rotation for full object-like movement.
+You can animate the `Rotation` control for a spinning carousel. You can also rotate or move `Carousel Control` itself to transform the full rig.
 
 ## Gradient Scale
 
-When `Gradient Scale` is enabled, the script creates a hidden layer named:
+When `Gradient Scale` is enabled, the script creates a hidden guide layer named:
 
 ```text
 Carousel Gradient Scale
 ```
 
-This layer contains a `Carousel Gradient` Ramp effect. The carousel layers read the ramp's start/end points and colors through expressions, then map brightness to scale:
+This layer contains a Ramp effect named `Carousel Gradient`. The carousel layer scale expressions read the Ramp start/end points and colors directly.
 
-- Darker areas move toward `Max Scale`.
-- Brighter areas move toward `Min Scale`.
+- Black areas drive layers toward `Min Scale`.
+- White areas drive layers toward `Max Scale`.
+- The default ramp is diagonal.
 
-The gradient layer is hidden, shy, and marked as a guide layer. You can still select it from the timeline if you need to edit the Ramp effect.
+The gradient layer is hidden, shy, and marked as a guide layer. You can still find it in the timeline and edit the Ramp effect manually.
 
-This version does not use `sampleImage()`. It reads the Ramp parameters directly, which is faster and allows the gradient controller layer to stay hidden.
+## Caveats
+
+- This script does not use `sampleImage()`. It reads Ramp parameters directly, so it is faster and more stable.
+- Because it reads Ramp parameters, extra effects or plugins applied to `Carousel Gradient Scale` are not sampled.
+- Moving or scaling the gradient layer itself is not the main control surface. Edit the Ramp start/end points and colors instead.
+- The script overwrites position/scale expressions on selected carousel layers.
+- Existing layer parenting and auto-orient settings may be replaced.
+- `Face Camera` only matters in 3D mode.
 
 ---
 
 # Carousel Gradient Rig для After Effects
 
-Минималистичная ScriptUI-панель для After Effects, которая собирает 2D/3D-карусель из выделенных слоев и, при желании, добавляет скейл от градиента.
+![Демо Carousel Gradient Scale](assets/carousel_scale.gif)
+
+ScriptUI-панель для After Effects, которая собирает управляемую 2D/3D-карусель из выделенных слоев и, при необходимости, добавляет масштабирование от градиента.
 
 ## Возможности
 
-- Собирает карусель из выделенных слоев: shape, text, картинки, видео, precomp.
-- Создает центральный null `Carousel CTRL`.
-- Привязывает все слои карусели к этому null, чтобы весь риг можно было двигать и крутить как один объект.
+- Собирает карусель из выделенных слоев: shape, text, footage, картинки, precomp.
+- Создает центральный null `Carousel Control` выше слоев карусели.
+- Привязывает слои карусели к control-null, чтобы весь риг можно было двигать и вращать как один объект.
 - Поддерживает 2D и 3D раскладку.
-- Может создать камеру и включить auto-orient слоев к камере.
-- Может добавить gradient scale: размер слоев меняется в зависимости от положения относительно скрытого градиента.
+- В 3D-режиме создает `Carousel Camera` после слоев карусели.
+- Может включить auto-orient слоев к камере.
+- Опциональный режим `Gradient Scale` меняет scale слоев от скрытого Ramp effect.
 
 ## Установка
 
@@ -94,7 +107,13 @@ This version does not use `sampleImage()`. It reads the Ramp parameters directly
 /Applications/Adobe After Effects <version>/Scripts/ScriptUI Panels/
 ```
 
-Перезапустите After Effects и откройте панель:
+На Windows обычно:
+
+```text
+C:\Program Files\Adobe\Adobe After Effects <version>\Support Files\Scripts\ScriptUI Panels\
+```
+
+Перезапустите After Effects и откройте:
 
 ```text
 Window > CarouselRig.jsx
@@ -104,44 +123,45 @@ Window > CarouselRig.jsx
 
 1. Откройте композицию.
 2. Выделите слои, которые нужно собрать в карусель.
-3. Откройте панель `CarouselRig.jsx`.
-4. Настройте `Radius`, `Rotation` и `Offset`.
-5. Включите `3D`, если нужна 3D-карусель.
-6. Включите `Face Camera`, если слои должны смотреть в камеру.
-7. Включите `Gradient Scale`, если размер должен реагировать на градиент.
-8. Нажмите `Create Carousel`.
+3. Откройте `Window > CarouselRig.jsx`.
+4. Оставьте `3D Layers` включенным для 3D-карусели или выключите для 2D.
+5. Оставьте `Face Camera` включенным, если 3D-слои должны смотреть в камеру.
+6. Включите `Gradient Scale`, если scale должен реагировать на градиент.
+7. Нажмите `Create Carousel`.
 
 ## Контролы
 
-Скрипт создает null `Carousel CTRL` в центре композиции.
+Скрипт создает null `Carousel Control`.
 
 - `Radius`: радиус карусели.
-- `Rotation`: прокрутка слоев по кругу. Удобно анимировать для вращения карусели.
-- `Offset`: сжимает или расширяет расстояние между слоями.
-  - `0` оставляет обычное равномерное расположение.
-  - Положительные значения собирают слои ближе друг к другу.
-  - Отрицательные значения раздвигают слои дальше.
-- `Min Scale`: создается только при `Gradient Scale`; минимальный множитель масштаба.
-- `Max Scale`: создается только при `Gradient Scale`; максимальный множитель масштаба.
+- `Rotation`: angle control для прокрутки распределения слоев по карусели.
+- `Offset`: angle control для изменения расстояния между слоями карусели.
+- `Min Scale`: создается только с `Gradient Scale`; scale для черных областей градиента.
+- `Max Scale`: создается только с `Gradient Scale`; scale для белых областей градиента.
 
-Также можно крутить сам `Carousel CTRL`:
-
-- В 2D-режиме обычным Z rotation.
-- В 3D-режиме по X/Y/Z, как цельный объект.
+`Rotation` удобно анимировать для вращения карусели. Сам `Carousel Control` тоже можно двигать и вращать, чтобы трансформировать весь риг.
 
 ## Gradient Scale
 
-Если включить `Gradient Scale`, скрипт создаст скрытый слой:
+Если включить `Gradient Scale`, скрипт создает скрытый guide layer:
 
 ```text
 Carousel Gradient Scale
 ```
 
-На нем лежит Ramp effect с именем `Carousel Gradient`. Слои карусели через expressions читают точки и цвета этого Ramp effect, считают яркость и мапят ее в scale:
+На нем лежит Ramp effect с именем `Carousel Gradient`. Expressions на scale слоев читают точки и цвета Ramp напрямую.
 
-- Темные области двигают слой к `Max Scale`.
-- Светлые области двигают слой к `Min Scale`.
+- Черные области дают `Min Scale`.
+- Белые области дают `Max Scale`.
+- По умолчанию Ramp диагональный.
 
-Gradient layer скрыт, зашайен и помечен как guide layer. При необходимости его можно найти в таймлайне и отредактировать Ramp effect руками.
+Gradient layer скрыт, shy и помечен как guide layer. Его можно найти в timeline и вручную редактировать Ramp effect.
 
-В этой версии не используется `sampleImage()`. Скрипт читает параметры Ramp напрямую, поэтому это быстрее и позволяет держать gradient layer скрытым.
+## Подводные Камни
+
+- Скрипт не использует `sampleImage()`. Он читает параметры Ramp напрямую, поэтому работает быстрее и стабильнее.
+- Так как читаются именно параметры Ramp, дополнительные эффекты или плагины на `Carousel Gradient Scale` не учитываются.
+- Двигать или скейлить сам gradient layer не основной способ управления. Лучше редактировать точки и цвета Ramp.
+- Скрипт перезаписывает expressions позиции и scale на выбранных слоях карусели.
+- Существующий parenting и auto-orient слоев могут быть заменены.
+- `Face Camera` имеет смысл только в 3D-режиме.
