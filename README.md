@@ -72,6 +72,10 @@ This layer contains a Ramp effect named `Carousel Gradient`. The carousel layer 
 
 The gradient layer is hidden, shy, and marked as a guide layer. You can still find it in the timeline and edit the Ramp effect manually.
 
+## Related Tool
+
+For driving arbitrary selected properties with a gradient field, see [GradientDriver](https://github.com/motionxamon/GradientDriver). It includes an optimized Ramp version and a bonus `sampleImage()` version for real pixel-based masks, plugins, and precomps.
+
 ## Caveats
 
 - This script does not use `sampleImage()`. It reads Ramp parameters directly, so it is faster and more stable.
@@ -156,6 +160,10 @@ Carousel Gradient Scale
 - По умолчанию Ramp диагональный.
 
 Gradient layer скрыт, shy и помечен как guide layer. Его можно найти в timeline и вручную редактировать Ramp effect.
+
+## Связанный Инструмент
+
+Для управления произвольными выделенными параметрами через gradient field есть [GradientDriver](https://github.com/motionxamon/GradientDriver). В нем есть оптимизированная Ramp-версия и бонусная `sampleImage()`-версия для реальных pixel masks, plugins и precomps.
 
 ## Подводные Камни
 
