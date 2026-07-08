@@ -10,8 +10,10 @@ ScriptUI panel for building a controllable 2D/3D carousel from selected After Ef
 - Creates a central `Carousel Control` null above the carousel layers.
 - Parents the carousel layers to the control null, so the full rig can be moved or rotated as one object.
 - Supports 2D and 3D carousel layouts.
+- Adds `Carousel Width` and `Carousel Height` controls for 2D carousel shape.
 - Creates a `Carousel Camera` after the carousel layers when 3D mode is enabled.
 - Can auto-orient carousel layers toward the camera.
+- Adds per-layer item offset sliders, or optional global randomized offsets.
 - Optional `Gradient Scale` mode scales layers from a hidden Ramp effect.
 
 ## Install
@@ -41,20 +43,29 @@ Window > CarouselRig.jsx
 3. Open `Window > CarouselRig.jsx`.
 4. Leave `3D Layers` enabled for a 3D carousel, or disable it for a 2D layout.
 5. Leave `Face Camera` enabled if 3D layers should auto-orient toward the camera.
-6. Enable `Gradient Scale` if the layer scale should react to a gradient.
-7. Click `Create Carousel`.
+6. Enable `Random Offset` if you want global randomized offsets instead of per-layer offset sliders.
+7. Enable `Gradient Scale` if the layer scale should react to a gradient.
+8. Click `Create Carousel`.
 
 ## Controls
 
 The script creates a null named `Carousel Control`.
 
-- `Radius`: carousel radius.
+- `Radius`: created only in 3D mode; carousel radius.
+- `Carousel Width`: created only in 2D mode; total width of the 2D carousel.
+- `Carousel Height`: created only in 2D mode; total height of the 2D carousel.
 - `Rotation`: angle control for rotating the layer distribution around the carousel.
 - `Offset`: angle control for changing the spacing between carousel layers.
+- `Random Offset X`: created only with `Random Offset`; maximum randomized X offset.
+- `Random Offset Y`: created only with `Random Offset`; maximum randomized Y offset.
+- `Random Offset Z`: created only with `Random Offset` in 3D mode; maximum randomized Z offset.
+- `Random Offset Seed`: created only with `Random Offset`; changes the randomized layout.
 - `Min Scale`: created only with `Gradient Scale`; scale value for black gradient areas.
 - `Max Scale`: created only with `Gradient Scale`; scale value for white gradient areas.
 
 You can animate the `Rotation` control for a spinning carousel. You can also rotate or move `Carousel Control` itself to transform the full rig.
+
+When `Random Offset` is disabled, each carousel layer gets its own `Item Offset X` and `Item Offset Y` sliders. In 3D mode, each layer also gets `Item Offset Z`.
 
 ## Gradient Scale
 
@@ -99,8 +110,10 @@ ScriptUI-панель для After Effects, которая собирает уп
 - Создает центральный null `Carousel Control` выше слоев карусели.
 - Привязывает слои карусели к control-null, чтобы весь риг можно было двигать и вращать как один объект.
 - Поддерживает 2D и 3D раскладку.
+- Добавляет `Carousel Width` и `Carousel Height` для формы 2D-карусели.
 - В 3D-режиме создает `Carousel Camera` после слоев карусели.
 - Может включить auto-orient слоев к камере.
+- Добавляет per-layer offset sliders или опциональный глобальный randomized offset.
 - Опциональный режим `Gradient Scale` меняет scale слоев от скрытого Ramp effect.
 
 ## Установка
@@ -130,20 +143,29 @@ Window > CarouselRig.jsx
 3. Откройте `Window > CarouselRig.jsx`.
 4. Оставьте `3D Layers` включенным для 3D-карусели или выключите для 2D.
 5. Оставьте `Face Camera` включенным, если 3D-слои должны смотреть в камеру.
-6. Включите `Gradient Scale`, если scale должен реагировать на градиент.
-7. Нажмите `Create Carousel`.
+6. Включите `Random Offset`, если нужен глобальный randomized offset вместо offset-слайдеров на каждом слое.
+7. Включите `Gradient Scale`, если scale должен реагировать на градиент.
+8. Нажмите `Create Carousel`.
 
 ## Контролы
 
 Скрипт создает null `Carousel Control`.
 
-- `Radius`: радиус карусели.
+- `Radius`: создается только в 3D-режиме; радиус карусели.
+- `Carousel Width`: создается только в 2D-режиме; общая ширина 2D-карусели.
+- `Carousel Height`: создается только в 2D-режиме; общая высота 2D-карусели.
 - `Rotation`: angle control для прокрутки распределения слоев по карусели.
 - `Offset`: angle control для изменения расстояния между слоями карусели.
+- `Random Offset X`: создается только с `Random Offset`; максимальный randomized X offset.
+- `Random Offset Y`: создается только с `Random Offset`; максимальный randomized Y offset.
+- `Random Offset Z`: создается только с `Random Offset` в 3D-режиме; максимальный randomized Z offset.
+- `Random Offset Seed`: создается только с `Random Offset`; меняет randomized layout.
 - `Min Scale`: создается только с `Gradient Scale`; scale для черных областей градиента.
 - `Max Scale`: создается только с `Gradient Scale`; scale для белых областей градиента.
 
 `Rotation` удобно анимировать для вращения карусели. Сам `Carousel Control` тоже можно двигать и вращать, чтобы трансформировать весь риг.
+
+Если `Random Offset` выключен, каждый слой карусели получает свои `Item Offset X` и `Item Offset Y`. В 3D-режиме также добавляется `Item Offset Z`.
 
 ## Gradient Scale
 

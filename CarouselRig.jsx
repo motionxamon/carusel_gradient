@@ -37,6 +37,12 @@ with optional gradient-driven scale.
             faceCameraCheck.helpTip = "Applies Auto-Orient toward the carousel camera.";
         } catch (err) {}
 
+        var randomOffsetCheck = layoutPanel.add("checkbox", undefined, "Random Offset");
+        randomOffsetCheck.value = false;
+        try {
+            randomOffsetCheck.helpTip = "Uses global random offset controls on the carousel null instead of per-layer item offset sliders.";
+        } catch (err) {}
+
         var gradientPanel = pal.add("panel", undefined, "Gradient Control");
         gradientPanel.orientation = "column";
         gradientPanel.alignChildren = ["left", "top"];
@@ -57,6 +63,7 @@ with optional gradient-driven scale.
                     offset: 0,
                     make3D: make3DCheck.value,
                     faceCamera: faceCameraCheck.value,
+                    randomOffset: randomOffsetCheck.value,
                     gradientScale: gradientScaleCheck.value
                 });
             } catch (err) {
@@ -74,6 +81,14 @@ with optional gradient-driven scale.
 
     function defaultRadius(comp) {
         return Math.round(Math.min(comp.width, comp.height) * 0.28);
+    }
+
+    function defaultCarouselWidth(comp) {
+        return defaultRadius(comp) * 2;
+    }
+
+    function defaultCarouselHeight(comp) {
+        return Math.round(defaultRadius(comp) * 0.56);
     }
 
     function activeComp() {
@@ -176,9 +191,23 @@ with optional gradient-driven scale.
             : [comp.width / 2, comp.height / 2];
         ctrl.property("ADBE Transform Group").property("ADBE Position").setValue(position);
 
-        addSlider(ctrl, "Radius", opts.radius);
+        if (opts.make3D) {
+            addSlider(ctrl, "Radius", opts.radius);
+        } else {
+            addSlider(ctrl, "Carousel Width", defaultCarouselWidth(comp));
+            addSlider(ctrl, "Carousel Height", defaultCarouselHeight(comp));
+        }
         addAngle(ctrl, "Rotation", opts.rotation);
         addAngle(ctrl, "Offset", opts.offset);
+
+        if (opts.randomOffset) {
+            addSlider(ctrl, "Random Offset X", 0);
+            addSlider(ctrl, "Random Offset Y", 0);
+            if (opts.make3D) {
+                addSlider(ctrl, "Random Offset Z", 0);
+            }
+            addSlider(ctrl, "Random Offset Seed", 0);
+        }
 
         if (opts.gradientScale) {
             addSlider(ctrl, "Min Scale", 55);
@@ -277,6 +306,9 @@ with optional gradient-driven scale.
             layer.threeDLayer = opts.make3D;
             addSlider(layer, "Carousel Index", i + 1);
             addSlider(layer, "Carousel Count", layers.length);
+            if (!opts.randomOffset) {
+                addItemOffsetControls(layer, opts.make3D);
+            }
             fitLayerToComp(layer, comp, opts.make3D);
             layer.parent = ctrl;
             if (opts.make3D && opts.faceCamera) {
@@ -284,10 +316,18 @@ with optional gradient-driven scale.
                     layer.autoOrient = AutoOrientType.CAMERA_OR_POINT_OF_INTEREST;
                 } catch (err) {}
             }
-            applyPositionExpression(layer, ctrl.name, opts.make3D);
+            applyPositionExpression(layer, ctrl.name, opts.make3D, opts.randomOffset);
             if (opts.gradientScale) {
                 applyGradientScaleExpression(layer, ctrl.name, gradientLayer.name);
             }
+        }
+    }
+
+    function addItemOffsetControls(layer, is3D) {
+        addSlider(layer, "Item Offset X", 0);
+        addSlider(layer, "Item Offset Y", 0);
+        if (is3D) {
+            addSlider(layer, "Item Offset Z", 0);
         }
     }
 
@@ -348,26 +388,50 @@ with optional gradient-driven scale.
             'ctrl=thisComp.layer("' + safeCtrlName + '");\n' +
             'idx=effect("Carousel Index")("Slider")-1;\n' +
             'count=Math.max(1,Math.round(effect("Carousel Count")("Slider")));\n' +
-            'rotation=degreesToRadians(ctrl.effect("Rotation")("Angle"));\n' +
+            'rotation=-degreesToRadians(ctrl.effect("Rotation")("Angle"));\n' +
             'offset=degreesToRadians(ctrl.effect("Offset")("Angle"));\n' +
             'step=(Math.PI*2/count)+offset;\n' +
             'a=rotation+idx*step;\n';
     }
 
-    function applyPositionExpression(layer, ctrlName, is3D) {
+    function applyPositionExpression(layer, ctrlName, is3D, randomOffset) {
         var base = carouselSharedExpression(ctrlName);
         var posExpr;
         if (is3D) {
             posExpr = base +
                 'radius=ctrl.effect("Radius")("Slider");\n' +
                 'base=[Math.sin(a)*radius,0,Math.cos(a)*radius];\n';
+            if (randomOffset) {
+                posExpr +=
+                    'randomX=Math.abs(ctrl.effect("Random Offset X")("Slider"));\n' +
+                    'randomY=Math.abs(ctrl.effect("Random Offset Y")("Slider"));\n' +
+                    'randomZ=Math.abs(ctrl.effect("Random Offset Z")("Slider"));\n' +
+                    'seed=ctrl.effect("Random Offset Seed")("Slider");\n' +
+                    'seedRandom(idx+seed,true);\n' +
+                    'itemOffset=[random(-randomX,randomX),random(-randomY,randomY),random(-randomZ,randomZ)];\n';
+            } else {
+                posExpr +=
+                    'itemOffset=[effect("Item Offset X")("Slider"),effect("Item Offset Y")("Slider"),effect("Item Offset Z")("Slider")];\n';
+            }
         } else {
             posExpr = base +
-                'radius=ctrl.effect("Radius")("Slider");\n' +
-                'base=[Math.sin(a)*radius,Math.cos(a)*radius*0.28];\n';
+                'carouselWidth=Math.abs(ctrl.effect("Carousel Width")("Slider"));\n' +
+                'carouselHeight=Math.abs(ctrl.effect("Carousel Height")("Slider"));\n' +
+                'base=[Math.sin(a)*carouselWidth/2,Math.cos(a)*carouselHeight/2];\n';
+            if (randomOffset) {
+                posExpr +=
+                    'randomX=Math.abs(ctrl.effect("Random Offset X")("Slider"));\n' +
+                    'randomY=Math.abs(ctrl.effect("Random Offset Y")("Slider"));\n' +
+                    'seed=ctrl.effect("Random Offset Seed")("Slider");\n' +
+                    'seedRandom(idx+seed,true);\n' +
+                    'itemOffset=[random(-randomX,randomX),random(-randomY,randomY)];\n';
+            } else {
+                posExpr +=
+                    'itemOffset=[effect("Item Offset X")("Slider"),effect("Item Offset Y")("Slider")];\n';
+            }
         }
 
-        posExpr += 'base;';
+        posExpr += 'base+itemOffset;';
 
         var transform = layer.property("ADBE Transform Group");
         var position = transform ? transform.property("ADBE Position") : null;
