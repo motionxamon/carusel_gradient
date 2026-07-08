@@ -8,6 +8,7 @@ ScriptUI-панель для After Effects, которая собирает уп
 
 - Собирает карусель из выделенных слоев: shape, text, footage, картинки, precomp.
 - Создает центральный null `Carousel Control` выше слоев карусели.
+- Подрезает `Carousel Control` и `Carousel Camera` по самому раннему `inPoint` и самому позднему `outPoint` выбранных слоев.
 - Привязывает слои карусели к control-null, чтобы весь риг можно было двигать и вращать как один объект.
 - Поддерживает 2D и 3D раскладку.
 - Добавляет `Carousel Width` и `Carousel Height` для формы 2D-карусели.
@@ -108,6 +109,7 @@ ScriptUI panel for After Effects that builds a controllable 2D/3D carousel from 
 
 - Builds a carousel from selected layers: shapes, text, footage, images, precomps.
 - Creates a central `Carousel Control` null above the carousel layers.
+- Trims `Carousel Control` and `Carousel Camera` to the earliest `inPoint` and latest `outPoint` of the selected layers.
 - Parents the carousel layers to the control null, so the full rig can be moved or rotated as one object.
 - Supports 2D and 3D carousel layouts.
 - Adds `Carousel Width` and `Carousel Height` controls for 2D carousel shape.

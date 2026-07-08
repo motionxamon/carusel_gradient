@@ -292,12 +292,14 @@ with optional gradient-driven scale.
     function createCarousel(opts) {
         var comp = opts.comp;
         var layers = selectedCarouselLayers(comp);
+        var timing = layerTimingRange(layers);
         var gradientLayer = usesGradient(opts) ? createGradientLayer(comp) : null;
         var ctrl = createController(comp, opts);
         var bottomCarouselLayer = lastLayerInStack(layers);
 
+        applyLayerTiming(ctrl, timing);
         if (opts.make3D) {
-            createCamera(comp, bottomCarouselLayer);
+            applyLayerTiming(createCamera(comp, bottomCarouselLayer), timing);
         }
         ctrl.moveBefore(firstLayerInStack(layers));
 
@@ -321,6 +323,36 @@ with optional gradient-driven scale.
                 applyGradientScaleExpression(layer, ctrl.name, gradientLayer.name);
             }
         }
+    }
+
+    function layerTimingRange(layers) {
+        var firstIn = layers[0].inPoint;
+        var lastOut = layers[0].outPoint;
+        for (var i = 1; i < layers.length; i++) {
+            if (layers[i].inPoint < firstIn) {
+                firstIn = layers[i].inPoint;
+            }
+            if (layers[i].outPoint > lastOut) {
+                lastOut = layers[i].outPoint;
+            }
+        }
+        return {
+            inPoint: firstIn,
+            outPoint: lastOut
+        };
+    }
+
+    function applyLayerTiming(layer, timing) {
+        if (!layer || !timing) {
+            return;
+        }
+        try {
+            layer.startTime = timing.inPoint;
+        } catch (err) {}
+        try {
+            layer.inPoint = timing.inPoint;
+            layer.outPoint = timing.outPoint;
+        } catch (err2) {}
     }
 
     function addItemOffsetControls(layer, is3D) {
